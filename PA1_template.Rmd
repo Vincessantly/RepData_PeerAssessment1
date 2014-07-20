@@ -3,18 +3,69 @@
 
 ## Loading and preprocessing the data
 
-
+```{r}
+file <- read.csv("activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
 
+```{r}
+agg <- aggregate(steps ~ date, file, sum)
+hist(agg$steps, xlab = "steps")
+mean1 <- mean(file$steps, na.rm=TRUE)
+median1 <- median(file$steps, na.rm=TRUE)
+```
 
+Mean: `r mean1`
+Median: `r median1`
 
 ## What is the average daily activity pattern?
 
+```{r}
+num <- by(data = file$steps, INDICES = file$interval, FUN = mean, na.rm=TRUE)
+plot(unique(file$interval), num, type = "l", xlab = "5 Min Interval", ylab = "Mean Steps", main = "Time Series Plot")
+```
 
+5-minute interval that, on average, contains the maximum number of steps: 835
 
 ## Imputing missing values
 
+```{r}
+na <- sum(is.na(file$steps))
+```
 
+Number of NAs: `r na`
+
+Strategy for imputing missing data: replace NAs with the mean for that day.
+
+```{r}
+naindex <- which(is.na(file))
+avg <- by(file$steps, file$date, median, na.rm=TRUE)
+avg <- as.matrix(avg)
+avg <- c(avg)
+avg[is.nan(avg)] <- 0
+avg <- rep(avg, each = 288)
+newfile <- cbind(file, avg)
+for (i in naindex) {
+    newfile[i, 1] <- newfile[i, 4]
+}
+ag <- aggregate(steps ~ date, newfile, sum)
+hist(ag$steps, xlab = "steps", main = "histogram after missing values were imputed")
+mean2 <- mean(newfile$steps)
+median2 <- median(newfile$steps)
+```
+
+Mean: `r mean2`
+Median: `r median2`
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+num <- by(data = file$steps, INDICES = file$interval, FUN = mean, na.rm=TRUE)
+plot(unique(file$interval), num, type = "l", xlab = "Interval", ylab = "Number of Steps", main = "weekend")
+```
+
+```{r}
+num <- by(data = file$steps, INDICES = file$interval, FUN = mean, na.rm=TRUE)
+plot(unique(file$interval), num, type = "l", xlab = "Interval", ylab = "Number of Steps", main = "weekday")
+```
