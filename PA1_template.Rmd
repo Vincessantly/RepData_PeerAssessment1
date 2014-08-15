@@ -1,6 +1,5 @@
 # Reproducible Research: Peer Assessment 1
 
-
 ## Loading and preprocessing the data
 
 ```{r}
@@ -11,7 +10,7 @@ file <- read.csv("activity.csv")
 
 ```{r}
 agg <- aggregate(steps ~ date, file, sum)
-hist(agg$steps, xlab = "steps")
+hist(agg$steps, xlab = "Steps", main = "Total Number of Steps Per Day")
 mean1 <- mean(file$steps, na.rm=TRUE)
 median1 <- median(file$steps, na.rm=TRUE)
 ```
@@ -36,23 +35,21 @@ na <- sum(is.na(file$steps))
 
 Number of NAs: `r na`
 
-Strategy for imputing missing data: replace NAs with the mean for that day.
+Strategy for imputing missing data: replace NAs with the median for that day.
 
 ```{r}
 naindex <- which(is.na(file))
 avg <- by(file$steps, file$date, median, na.rm=TRUE)
 avg <- as.matrix(avg)
 avg <- c(avg)
-avg[is.nan(avg)] <- 0
+avg[is.na(avg)] <- 0
 avg <- rep(avg, each = 288)
 newfile <- cbind(file, avg)
 for (i in naindex) {
     newfile[i, 1] <- newfile[i, 4]
 }
-ag <- aggregate(steps ~ date, newfile, sum)
-hist(ag$steps, xlab = "steps", main = "histogram after missing values were imputed")
-mean2 <- mean(newfile$steps)
 median2 <- median(newfile$steps)
+mean2 <- mean(newfile$steps)
 ```
 
 Mean: `r mean2`
@@ -61,11 +58,14 @@ Median: `r median2`
 ## Are there differences in activity patterns between weekdays and weekends?
 
 ```{r}
-num <- by(data = file$steps, INDICES = file$interval, FUN = mean, na.rm=TRUE)
-plot(unique(file$interval), num, type = "l", xlab = "Interval", ylab = "Number of Steps", main = "weekend")
-```
-
-```{r}
-num <- by(data = file$steps, INDICES = file$interval, FUN = mean, na.rm=TRUE)
-plot(unique(file$interval), num, type = "l", xlab = "Interval", ylab = "Number of Steps", main = "weekday")
+file$date <- as.Date(file$date)
+file$weekday <- weekdays(file$date)
+file$isweekend <- (file$weekday %in% c("Saturday", "Sunday"))
+weekendonly <- file[file$isweekend==TRUE,]
+weekdayonly <- file[file$isweekend==FALSE,]
+endonly <- by(weekendonly$steps, weekendonly$interval, FUN=mean, na.rm=TRUE)
+dayonly <- by(weekdayonly$steps, weekdayonly$interval, FUN=mean, na.rm=TRUE)
+par(mfcol = c(2,1))
+plot(endonly, type = "l", xlab = "Interval", ylab = "Number of Steps", main = "Weekend Activity Pattern")
+plot(dayonly, type = "l", xlab = "Interval", ylab = "Number of Steps", main = "Weekday Activity Pattern")
 ```
